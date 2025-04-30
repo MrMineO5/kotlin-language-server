@@ -7,6 +7,7 @@ import org.eclipse.lsp4j.services.TextDocumentService
 import org.javacs.kt.codeaction.codeActions
 import org.javacs.kt.completion.completions
 import org.javacs.kt.definition.goToDefinition
+import org.javacs.kt.definition.goToUsages
 import org.javacs.kt.diagnostic.convertDiagnostic
 import org.javacs.kt.formatting.FormattingService
 import org.javacs.kt.hover.hoverAt
@@ -126,10 +127,18 @@ class KotlinTextDocumentService(
             LOG.info("Go-to-definition at {}", describePosition(position))
 
             val (file, cursor) = recover(position, Recompile.NEVER) ?: return@compute Either.forLeft(emptyList())
-            goToDefinition(file, cursor, uriContentProvider.classContentProvider, tempDirectory, config.externalSources, cp)
-                ?.let(::listOf)
-                ?.let { Either.forLeft<List<Location>, List<LocationLink>>(it) }
-                ?: noResult("Couldn't find definition at ${describePosition(position)}", Either.forLeft(emptyList()))
+
+            val definition = goToDefinition(file, cursor, uriContentProvider.classContentProvider, tempDirectory, config.externalSources, cp)
+            if (definition != null) {
+                return@reportTime Either.forLeft(listOf(definition))
+            }
+
+            val usages = goToUsages(file, cursor, uriContentProvider.classContentProvider, tempDirectory, config.externalSources, cp)
+            if (usages != null) {
+                return@reportTime Either.forLeft(usages)
+            }
+
+            return@reportTime noResult("Couldn't find definition at ${describePosition(position)}", Either.forLeft(emptyList()))
         }
     }
 
@@ -276,7 +285,7 @@ class KotlinTextDocumentService(
         debounceLint.submitImmediately {
             sp.compileAllFiles()
             sp.saveAllFiles()
-            sp.refreshDependencyIndexes()
+            sp.refreshDependencyIndexes(force = true)
         }
     }
 

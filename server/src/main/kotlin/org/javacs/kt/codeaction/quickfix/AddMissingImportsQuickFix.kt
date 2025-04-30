@@ -4,12 +4,10 @@ import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.jetbrains.kotlin.psi.KtFile
 import org.javacs.kt.CompiledFile
-import org.javacs.kt.LOG
 import org.javacs.kt.index.SymbolIndex
 import org.javacs.kt.index.Symbol
 import org.javacs.kt.position.offset
 import org.javacs.kt.util.toPath
-import org.javacs.kt.codeaction.quickfix.diagnosticMatch
 import org.javacs.kt.imports.getImportTextEditEntry
 
 class AddMissingImportsQuickFix: QuickFix {

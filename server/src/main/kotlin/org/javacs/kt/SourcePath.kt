@@ -293,11 +293,11 @@ class SourcePath(
         files.keys.forEach { save(it) }
     }
 
-    fun refreshDependencyIndexes() {
+    fun refreshDependencyIndexes(force: Boolean = false) {
         compileAllFiles()
         val module = files.values.first { it.module != null }.module
         if (module != null) {
-            refreshDependencyIndexes(module)
+            refreshDependencyIndexes(module, force)
         }
     }
 
@@ -317,9 +317,9 @@ class SourcePath(
     /**
      * Refreshes the indexes. If already done, refreshes only the declarations in the files that were changed.
      */
-    private fun refreshDependencyIndexes(module: ModuleDescriptor) = indexAsync.execute {
-        if (indexEnabled && !cp.classpathCached) {
-            val declarations = getDeclarationDescriptors(files.values)
+    private fun refreshDependencyIndexes(module: ModuleDescriptor, force: Boolean = false) = indexAsync.execute {
+        if ((indexEnabled && !cp.classpathCached) || force) {
+            val declarations = if (force) emptySequence() else getDeclarationDescriptors(files.values)
             index.refresh(module, declarations)
         }
     }
